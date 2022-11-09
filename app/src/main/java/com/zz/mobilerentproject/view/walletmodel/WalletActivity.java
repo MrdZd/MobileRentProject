@@ -3,6 +3,7 @@ package com.zz.mobilerentproject.view.walletmodel;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -14,8 +15,11 @@ import com.zz.mobilerentproject.R;
 import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.UserData;
 import com.zz.mobilerentproject.bean.WalletData;
+import com.zz.mobilerentproject.databinding.ActivityCurOrderBinding;
+import com.zz.mobilerentproject.databinding.ActivityWalletBinding;
 import com.zz.mobilerentproject.http.HttpLoginService;
 import com.zz.mobilerentproject.http.HttpWalletService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
 import com.zz.mobilerentproject.view.loginmodel.LoginViewActivity;
@@ -31,29 +35,24 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class WalletActivity extends AppCompatActivity {
 
-    private Button                  recharge_button;
-    private TextView                balance_text;
     private String                  balance;
-    private Button                  back_button;
-    private OkHttpClient            client;
     private Retrofit                retrofit;
     private UserModel               userModel;
     private static UserModelManager manager;
     private HttpWalletService       httpWalletService;
+    private RetrofitManager         retrofitManager;
+    private ActivityWalletBinding   binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_wallet);
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        binding = ActivityWalletBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpWalletService = retrofit.create(HttpWalletService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
-        initView();
         initData();
         initOnClickListener();
     }
@@ -63,39 +62,19 @@ public class WalletActivity extends AppCompatActivity {
     }
 
     private void initOnClickListener() {
-        back_button.setOnClickListener(new View.OnClickListener() {
+        binding.walletBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
 
-        recharge_button.setOnClickListener(new View.OnClickListener() {
+        binding.rechargeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 UpdateBalanceRequest(userModel.user_email, "5");
             }
         });
-    }
-
-    private void initView() {
-        back_button = findViewById(R.id.wallet_back);
-        balance_text = findViewById(R.id.balance);
-        recharge_button = findViewById(R.id.recharge_button);
-    }
-
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
     }
 
     private void GetBalanceRequest(String email) {
@@ -105,7 +84,7 @@ public class WalletActivity extends AppCompatActivity {
             public void onResponse(Call<BasicData<WalletData>> call, Response<BasicData<WalletData>> response) {
                 BasicData<WalletData> data = response.body();
                 balance = data.getData().getBalance().toString();
-                balance_text.setText(balance);
+                binding.balance.setText(balance);
             }
 
             @Override
@@ -123,7 +102,7 @@ public class WalletActivity extends AppCompatActivity {
             public void onResponse(Call<BasicData<WalletData>> call, Response<BasicData<WalletData>> response) {
                 BasicData<WalletData> data = response.body();
                 balance = data.getData().getBalance().toString();
-                balance_text.setText(balance);
+                binding.balance.setText(balance);
             }
 
             @Override

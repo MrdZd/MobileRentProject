@@ -33,14 +33,10 @@ import java.util.List;
 public class NotificationsFragment extends Fragment {
 
     MMKV kv = MMKV.defaultMMKV();
-    private TextView                        mNameText;
-    private View                            mView;
-    private Button                          mExitButton;
+
     private FragmentNotificationsBinding    binding;
-    private RecyclerView                    mRecyclerView;  //用户列表
     private UserChoiceAdapter               adapter;  //适配器
     private List<UserChoiceData>            mList;
-    private LinearLayout                    mMessageLayout;
     private UserModel                       userModel;
     private static UserModelManager         manager;
 
@@ -51,7 +47,6 @@ public class NotificationsFragment extends Fragment {
 
         binding = FragmentNotificationsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-        mView = root;
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
         initData();
@@ -75,16 +70,14 @@ public class NotificationsFragment extends Fragment {
     }
 
     private void initRecyclerView() {
-
-        mRecyclerView = (RecyclerView) mView.findViewById(R.id.user_choice_recyclerview);
+        binding.userChoiceRecyclerview.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
         //设置瀑布流布局为2列，垂直方向滑动
-        mRecyclerView.setLayoutManager(new StaggeredGridLayoutManager(2,StaggeredGridLayoutManager.VERTICAL));
         adapter = new UserChoiceAdapter(getContext(), mList);
-        mRecyclerView.setAdapter(adapter);
+        binding.userChoiceRecyclerview.setAdapter(adapter);
     }
 
     private void initOnClickListener() {
-        mExitButton.setOnClickListener(new View.OnClickListener() {
+        binding.userExitButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 kv.encode("login_judge", false);
@@ -92,7 +85,7 @@ public class NotificationsFragment extends Fragment {
                 startActivity(intent);
             }
         });
-        mMessageLayout.setOnClickListener(new View.OnClickListener() {
+        binding.messageLinearlayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getContext(), MessageViewActivity.class);
@@ -103,10 +96,7 @@ public class NotificationsFragment extends Fragment {
 
 
     private void initView() {
-        mExitButton = mView.findViewById(R.id.user_exit_button);
-        mMessageLayout = mView.findViewById(R.id.message_linearlayout);
-        mNameText = mView.findViewById(R.id.user_name);
-        mNameText.setText(userModel.user_name);
+        binding.userName.setText(userModel.user_name);
     }
 
 

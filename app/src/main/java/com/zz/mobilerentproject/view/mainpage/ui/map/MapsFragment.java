@@ -38,6 +38,7 @@ import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.OrderData;
 import com.zz.mobilerentproject.bean.OrderListData;
 import com.zz.mobilerentproject.http.HttpOrderService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.PermissionUtils;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
@@ -61,20 +62,13 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMyLocationButt
     private boolean permissionDenied = false;
 
     private FragmentMapsBinding     binding;
-    private View                    mView;
     private GoogleMap               map;
-    private ImageView               mScan;
-    private int                     requestCode;
-    private Toast                   toast;
     private List<OrderData>         mList;
-    private RecyclerView            mRecyclerView;  //Order列表
     private OrderAdapter            adapter;  //适配器
     private HttpOrderService        httpOrderService;
     private UserModel               userModel;
     private static UserModelManager manager;
-    private List<OrderListData>     orderList;
-
-    private OkHttpClient            client;
+    private RetrofitManager         retrofitManager;
     private Retrofit                retrofit;
 
 
@@ -85,33 +79,14 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMyLocationButt
                              @Nullable Bundle savedInstanceState) {
         binding = FragmentMapsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-        mView = root;
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpOrderService = retrofit.create(HttpOrderService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
         initData();
-        initView();
         initRecyclerView();
         return root;
-    }
-
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
     }
 
     @Override
@@ -151,11 +126,10 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMyLocationButt
 //    }
 
     private void initRecyclerView() {
-        mRecyclerView = (RecyclerView) mView.findViewById(R.id.user_order_recyclerview);
+        binding.userOrderRecyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
         //设置瀑布流布局为2列，垂直方向滑动
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new OrderAdapter(getContext(), mList);
-        mRecyclerView.setAdapter(adapter);
+        binding.userOrderRecyclerview.setAdapter(adapter);
     }
 
     private void initData() {
@@ -174,11 +148,6 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMyLocationButt
         mList.add(orderData1);
         mList.add(orderData2);
     }
-
-    private void initView() {
-
-    }
-
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {

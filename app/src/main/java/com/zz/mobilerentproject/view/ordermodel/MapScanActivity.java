@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -26,7 +27,10 @@ import com.king.zxing.CaptureActivity;
 
 import com.zz.mobilerentproject.R;
 import com.zz.mobilerentproject.bean.BasicData;
+import com.zz.mobilerentproject.databinding.ActivityHisOrderBinding;
+import com.zz.mobilerentproject.databinding.ActivityMapScanBinding;
 import com.zz.mobilerentproject.http.HttpRentService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.PermissionUtils;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
@@ -48,56 +52,36 @@ public class MapScanActivity extends AppCompatActivity
     private boolean permissionDenied = false;
 
     private GoogleMap               map;
-    private ImageView               mScan;
     private int                     requestCode;
     private Toast                   toast;
-    private OkHttpClient            client;
     private Retrofit                retrofit;
     private UserModel               userModel;
     private static UserModelManager manager;
     private HttpRentService         httpRentService;
+    private RetrofitManager         retrofitManager;
+    private ActivityMapScanBinding  binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map_scan);
+        binding = ActivityMapScanBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpRentService = retrofit.create(HttpRentService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
-        initView();
         initOnClickListener();
     }
 
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
-    }
-
-    private void initView() {
-        mScan = findViewById(R.id.scan);
-    }
 
     private void initOnClickListener() {
-        mScan.setOnClickListener(new View.OnClickListener() {
+        binding.scan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivityForResult(new Intent(MapScanActivity.this, CaptureActivity.class), requestCode);

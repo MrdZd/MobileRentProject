@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,7 +17,10 @@ import com.tencent.mmkv.MMKV;
 import com.zz.mobilerentproject.R;
 import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.UserData;
+import com.zz.mobilerentproject.databinding.ActivityLoginBinding;
+import com.zz.mobilerentproject.databinding.FragmentHomeBinding;
 import com.zz.mobilerentproject.http.HttpLoginService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
 import com.zz.mobilerentproject.view.mainpage.ViewPageActivity;
@@ -34,48 +38,28 @@ public class LoginViewActivity extends AppCompatActivity {
 
     MMKV kv = MMKV.defaultMMKV();
 
-    private Button                  turn_register;
-    private EditText                mUsername;
-    private EditText                mPassword;
-    private OkHttpClient            client;
+    private RetrofitManager         retrofitManager;
     private Retrofit                retrofit;
     private HttpLoginService        httpLoginService;
     private UserModel               userModel;
     private static UserModelManager manager;
-
+    private ActivityLoginBinding    binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        binding = ActivityLoginBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpLoginService = retrofit.create(HttpLoginService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
-        initView();
         initOnClickListener();
     }
 
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
-    }
-
     private void initOnClickListener() {
-        turn_register.setOnClickListener(new View.OnClickListener() {
+        binding.turnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginViewActivity.this, RegisterViewActivity.class);
@@ -84,15 +68,10 @@ public class LoginViewActivity extends AppCompatActivity {
         });
     }
 
-    private void initView() {
-        mUsername = findViewById(R.id.username);
-        mPassword = findViewById(R.id.password);
-        turn_register = findViewById(R.id.turn_register);
-    }
 
     public void login_click(View view) {
-        String username = mUsername.getText().toString().trim();
-        String password = mPassword.getText().toString().trim();
+        String username = binding.username.getText().toString().trim();
+        String password = binding.password.getText().toString().trim();
         if (TextUtils.isEmpty(username)) {
             Toast.makeText(this, "Username is empty!", Toast.LENGTH_SHORT).show();
             return;

@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,9 +16,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.zz.mobilerentproject.R;
 import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.WalletData;
+import com.zz.mobilerentproject.databinding.ActivityMapScanBinding;
+import com.zz.mobilerentproject.databinding.ActivityPaymentBinding;
 import com.zz.mobilerentproject.http.HttpOrderService;
 import com.zz.mobilerentproject.http.HttpRentService;
 import com.zz.mobilerentproject.http.HttpWalletService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
 import com.zz.mobilerentproject.view.loginmodel.LoginViewActivity;
@@ -35,46 +39,37 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class PaymentActivity extends AppCompatActivity {
 
     private Bundle                  bundle;
-    private Button                  back_button;
-    private Button                  pay_button;
-    private OkHttpClient            client;
     private Retrofit                retrofit;
     private UserModel               userModel;
     private static UserModelManager manager;
     private HttpWalletService       httpWalletService;
     private HttpRentService         httpRentService;
+    private RetrofitManager         retrofitManager;
+    private ActivityPaymentBinding  binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_payment);
-        inithttpClient();
+        binding = ActivityPaymentBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
         bundle = this.getIntent().getExtras();//获取bundle对象
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpWalletService = retrofit.create(HttpWalletService.class);
         httpRentService = retrofit.create(HttpRentService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
-        initView();
         initOnClickListener();
     }
 
-    private void initView() {
-        back_button = findViewById(R.id.back_maps);
-        pay_button = findViewById(R.id.pay);
-    }
-
     private void initOnClickListener() {
-        back_button.setOnClickListener(new View.OnClickListener() {
+        binding.backMaps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-        pay_button.setOnClickListener(new View.OnClickListener() {
+        binding.pay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Long tsLong = System.currentTimeMillis()/1000;
@@ -82,20 +77,6 @@ public class PaymentActivity extends AppCompatActivity {
                 RentEndRequest(userModel.user_email, ts);
             }
         });
-    }
-
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
     }
 
     private void RentEndRequest(String email, String endTime) {

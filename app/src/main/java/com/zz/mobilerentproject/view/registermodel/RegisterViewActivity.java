@@ -3,6 +3,7 @@ package com.zz.mobilerentproject.view.registermodel;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -15,8 +16,11 @@ import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.FeedbackData;
 import com.zz.mobilerentproject.bean.RegisterData;
 import com.zz.mobilerentproject.bean.UserData;
+import com.zz.mobilerentproject.databinding.ActivityLoginBinding;
+import com.zz.mobilerentproject.databinding.ActivityRegisterBinding;
 import com.zz.mobilerentproject.http.HttpLoginService;
 import com.zz.mobilerentproject.http.HttpRegisterService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.UserModelManager;
 import com.zz.mobilerentproject.view.loginmodel.LoginViewActivity;
 import com.zz.mobilerentproject.view.mainpage.ViewPageActivity;
@@ -31,41 +35,34 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RegisterViewActivity extends AppCompatActivity {
 
-    private Button                      btn_back;
-    private Button                      btn_register;
-    private TextView                    lastName;
-    private TextView                    firstName;
-    private TextView                    email;
-    private TextView                    password;
-    private OkHttpClient                client;
     private Retrofit                    retrofit;
     private HttpRegisterService         httpRegisterService;
+    private RetrofitManager             retrofitManager;
+    private ActivityRegisterBinding     binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_register);
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        binding = ActivityRegisterBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpRegisterService = retrofit.create(HttpRegisterService.class);
-        initView();
         initOnClickListener();
     }
 
     private void initOnClickListener() {
-        btn_back.setOnClickListener(new View.OnClickListener() {
+        binding.btnRegisterBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
-        btn_register.setOnClickListener(new View.OnClickListener() {
+        binding.btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                HttpRequest(firstName.getText().toString(), lastName.getText().toString(), email.getText().toString(), password.getText().toString());
+                HttpRequest(binding.firstname.getText().toString(), binding.lastname.getText().toString(),
+                        binding.userRegisterEmail.getText().toString(), binding.registerPassword.getText().toString());
             }
         });
     }
@@ -95,27 +92,6 @@ public class RegisterViewActivity extends AppCompatActivity {
         });
     }
 
-    private void initView() {
-        lastName = findViewById(R.id.lastname);
-        firstName = findViewById(R.id.firstname);
-        email = findViewById(R.id.user_register_email);
-        password = findViewById(R.id.register_password);
-        btn_back = findViewById(R.id.btn_register_back);
-        btn_register = findViewById(R.id.btn_register);
-    }
 
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
-    }
 
 }

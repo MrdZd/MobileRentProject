@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,7 +19,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.zz.mobilerentproject.R;
 import com.zz.mobilerentproject.bean.BasicData;
 import com.zz.mobilerentproject.bean.FeedbackData;
+import com.zz.mobilerentproject.databinding.ActivityCurOrderBinding;
+import com.zz.mobilerentproject.databinding.ActivityLoginBinding;
 import com.zz.mobilerentproject.http.HttpFeedbackService;
+import com.zz.mobilerentproject.http.RetrofitManager;
 import com.zz.mobilerentproject.util.UserModel;
 import com.zz.mobilerentproject.util.UserModelManager;
 import com.zz.mobilerentproject.view.paymentmodel.PaymentActivity;
@@ -36,26 +40,21 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class CurOrderActivity extends AppCompatActivity {
 
     private Bundle                  bundle;
-    private Button                  feedback_button;
-    private Button                  return_button;
-    private TextView                priceText;
-    private TextView                kmText;
-    private OkHttpClient            client;
     private Retrofit                retrofit;
     private UserModel               userModel;
     private static UserModelManager manager;
     private HttpFeedbackService     httpFeedbackService;
+    private RetrofitManager         retrofitManager;
+    private ActivityCurOrderBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_cur_order);
+        binding = ActivityCurOrderBinding.inflate(LayoutInflater.from(this));
+        setContentView(binding.getRoot());
         bundle = this.getIntent().getExtras();//获取bundle对象
-        inithttpClient();
-        retrofit = new Retrofit.Builder().baseUrl("http://20.68.139.52/")
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        retrofitManager = new RetrofitManager();
+        retrofit = retrofitManager.getRetrofit();
         httpFeedbackService = retrofit.create(HttpFeedbackService.class);
         manager = UserModelManager.getInstance();
         userModel = manager.getUserModel();
@@ -64,18 +63,18 @@ public class CurOrderActivity extends AppCompatActivity {
     }
 
     private void initOnClickListener() {
-        return_button.setOnClickListener(new View.OnClickListener() {
+        binding.returnBike.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(CurOrderActivity.this, PaymentActivity.class);
                 //传递文字
                 Bundle bundle = new Bundle();//定义Bundle对象存储要传递的值
-                bundle.putString("price", "-" + priceText.getText());
+                bundle.putString("price", "-" + binding.priceText.getText());
                 intent.putExtras(bundle);//将bundle对象给intent
                 startActivity(intent);
             }
         });
-        feedback_button.setOnClickListener(new View.OnClickListener() {
+        binding.feedbackButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 showInputDialog();
@@ -83,30 +82,11 @@ public class CurOrderActivity extends AppCompatActivity {
         });
     }
 
-    private void inithttpClient() {
-        HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-            @Override
-            public void log(String message) {
-                //打印retrofit日志
-                Log.e("RetrofitLog","retrofitBack = "+message);
-            }
-        });
-        loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                .addInterceptor(loggingInterceptor)
-                .build();
-    }
-
     private void initView() {
-        feedback_button = findViewById(R.id.feedback_button);
-        return_button = findViewById(R.id.return_bike);
-        priceText = findViewById(R.id.price_text);
-        kmText = findViewById(R.id.km_text);
-
         Random r = new Random();
         Double km = r.nextDouble() * 5;
-        kmText.setText(String.format("%.2f", km));
-        priceText.setText(String.format("%.2f", km * 2));
+        binding.kmText.setText(String.format("%.2f", km));
+        binding.priceText.setText(String.format("%.2f", km * 2));
     }
 
     private void showInputDialog(){
